@@ -28,7 +28,48 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
-    
+    const productsCollection = client.db("techDb").collection("products");
+    const arrivalsCollection = client.db("techDb").collection("arrivals");
+    const offersCollection = client.db("techDb").collection("offers");
+    const slidersCollection = client.db("techDb").collection("sliders");
+    const discountCollection = client.db("techDb").collection("discount");
+    const sponsorsCollection = client.db("techDb").collection("sponsors");
+
+    // * To get all products data:
+    app.get("/products" , async(req , res) => {
+        const result = await productsCollection.find().toArray();
+        res.send(result);
+    });
+
+    // * To get arrivals data: 
+    app.get("/arrivals" , async(req , res) => {
+        const result = await arrivalsCollection.find().toArray();
+        res.send(result);
+    });
+
+    // * To get offers Data:
+    app.get("/offers" , async(req , res) => {
+        const result = await offersCollection.find().toArray();
+        res.send(result);
+    });
+
+    // * To get sliders data:
+    app.get("/sliders" , async (req , res) => {
+        const result = await slidersCollection.find().toArray();
+        res.send(result);
+    });
+
+    // * To get Special Discount Data:
+    app.get("/discount" , async (req , res) => {
+        const result = await discountCollection.find().toArray();
+        res.send(result)
+    });
+
+    // * To get sponsors data:
+    app.get("/sponsors" , async(req , res) => {
+        const result = await sponsorsCollection.find().toArray();
+        res.send(result);
+    })
 
 
     // Send a ping to confirm a successful connection
