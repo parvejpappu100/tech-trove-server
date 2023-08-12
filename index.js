@@ -34,6 +34,8 @@ async function run() {
     const slidersCollection = client.db("techDb").collection("sliders");
     const discountCollection = client.db("techDb").collection("discount");
     const sponsorsCollection = client.db("techDb").collection("sponsors");
+    const usersCollection = client.db("techDb").collection("users");
+    const cartsCollection = client.db("techDb").collection("carts");
 
     // * To get all products data:
     app.get("/products" , async(req , res) => {
@@ -69,6 +71,29 @@ async function run() {
     app.get("/sponsors" , async(req , res) => {
         const result = await sponsorsCollection.find().toArray();
         res.send(result);
+    })
+
+
+    // * Carts Collections apis:
+
+    // * To get carts data:
+    app.get("/carts" , async(req , res) => {
+      const email = req.query.email;
+      if(!email){
+        res.send([])
+        return
+      }
+      const query = {email: email};
+      const result = await cartsCollection.find(query).toArray();
+      res.send(result);
+    })
+
+    // add carts product on carts collection:
+    app.post("/carts" , async(req , res) => {
+      const item = req.body;
+      console.log(item)
+      const result = await cartsCollection.insertOne(item);
+      res.send(result);
     })
 
 
