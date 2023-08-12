@@ -36,6 +36,7 @@ async function run() {
     const sponsorsCollection = client.db("techDb").collection("sponsors");
     const usersCollection = client.db("techDb").collection("users");
     const cartsCollection = client.db("techDb").collection("carts");
+    const savedProductCollection = client.db("techDb").collection("savedProduct");
 
     // * To get all products data:
     app.get("/products" , async(req , res) => {
@@ -94,7 +95,29 @@ async function run() {
       console.log(item)
       const result = await cartsCollection.insertOne(item);
       res.send(result);
+    });
+
+
+    // * Saved Product Collections apis:
+
+    // * To get saved data:
+    app.get("/saved" , async(req , res) => {
+      const email = req.query.email;
+      if(!email){
+        res.send([])
+        return
+      }
+      const query = {email: email};
+      const result = await savedProductCollection.find(query).toArray();
+      res.send(result);
     })
+
+    // add saved product on saved collection:
+    app.post("/saved" , async(req , res) => {
+      const item = req.body;
+      const result = await savedProductCollection.insertOne(item);
+      res.send(result);
+    });
 
 
     // Send a ping to confirm a successful connection
