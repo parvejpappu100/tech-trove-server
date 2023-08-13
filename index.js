@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const port = process.env.PORT || 5000;
 
@@ -94,6 +94,23 @@ async function run() {
       const item = req.body;
       console.log(item)
       const result = await cartsCollection.insertOne(item);
+      res.send(result);
+    });
+
+    // * Update carts product quantity:
+    app.put("/carts/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id)
+      const filter = { _id: new ObjectId(id) };
+      console.log(filter)
+      const options = { upsert: true };
+      const updatedQuantity = req.body;
+      const product = {
+        $set: {
+          productQuantity: updatedQuantity.newQuantity
+        },
+      };
+      const result = await cartsCollection.updateOne(filter, product, options);
       res.send(result);
     });
 
