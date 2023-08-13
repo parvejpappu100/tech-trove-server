@@ -1,16 +1,13 @@
-const express = require('express');
+const express = require("express");
 const app = express();
-const cors = require('cors');
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-require('dotenv').config()
+const cors = require("cors");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+require("dotenv").config();
 const port = process.env.PORT || 5000;
-
 
 // MIDDLEWARE
 app.use(cors());
 app.use(express.json());
-
-
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.fdnsrak.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -20,7 +17,7 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 
 async function run() {
@@ -36,63 +33,64 @@ async function run() {
     const sponsorsCollection = client.db("techDb").collection("sponsors");
     const usersCollection = client.db("techDb").collection("users");
     const cartsCollection = client.db("techDb").collection("carts");
-    const savedProductCollection = client.db("techDb").collection("savedProduct");
+    const savedProductCollection = client
+      .db("techDb")
+      .collection("savedProduct");
 
     // * To get all products data:
-    app.get("/products" , async(req , res) => {
-        const result = await productsCollection.find().toArray();
-        res.send(result);
+    app.get("/products", async (req, res) => {
+      const result = await productsCollection.find().toArray();
+      res.send(result);
     });
 
-    // * To get arrivals data: 
-    app.get("/arrivals" , async(req , res) => {
-        const result = await arrivalsCollection.find().toArray();
-        res.send(result);
+    // * To get arrivals data:
+    app.get("/arrivals", async (req, res) => {
+      const result = await arrivalsCollection.find().toArray();
+      res.send(result);
     });
 
     // * To get offers Data:
-    app.get("/offers" , async(req , res) => {
-        const result = await offersCollection.find().toArray();
-        res.send(result);
+    app.get("/offers", async (req, res) => {
+      const result = await offersCollection.find().toArray();
+      res.send(result);
     });
 
     // * To get sliders data:
-    app.get("/sliders" , async (req , res) => {
-        const result = await slidersCollection.find().toArray();
-        res.send(result);
+    app.get("/sliders", async (req, res) => {
+      const result = await slidersCollection.find().toArray();
+      res.send(result);
     });
 
     // * To get Special Discount Data:
-    app.get("/discount" , async (req , res) => {
-        const result = await discountCollection.find().toArray();
-        res.send(result)
+    app.get("/discount", async (req, res) => {
+      const result = await discountCollection.find().toArray();
+      res.send(result);
     });
 
     // * To get sponsors data:
-    app.get("/sponsors" , async(req , res) => {
-        const result = await sponsorsCollection.find().toArray();
-        res.send(result);
-    })
-
+    app.get("/sponsors", async (req, res) => {
+      const result = await sponsorsCollection.find().toArray();
+      res.send(result);
+    });
 
     // * Carts Collections apis:
 
     // * To get carts data:
-    app.get("/carts" , async(req , res) => {
+    app.get("/carts", async (req, res) => {
       const email = req.query.email;
-      if(!email){
-        res.send([])
-        return
+      if (!email) {
+        res.send([]);
+        return;
       }
-      const query = {email: email};
+      const query = { email: email };
       const result = await cartsCollection.find(query).toArray();
       res.send(result);
-    })
+    });
 
     // add carts product on carts collection:
-    app.post("/carts" , async(req , res) => {
+    app.post("/carts", async (req, res) => {
       const item = req.body;
-      console.log(item)
+      console.log(item);
       const result = await cartsCollection.insertOne(item);
       res.send(result);
     });
@@ -100,46 +98,54 @@ async function run() {
     // * Update carts product quantity:
     app.put("/carts/:id", async (req, res) => {
       const id = req.params.id;
-      console.log(id)
+      console.log(id);
       const filter = { _id: new ObjectId(id) };
-      console.log(filter)
+      console.log(filter);
       const options = { upsert: true };
       const updatedQuantity = req.body;
       const product = {
         $set: {
-          productQuantity: updatedQuantity.newQuantity
+          productQuantity: updatedQuantity.newQuantity,
         },
       };
       const result = await cartsCollection.updateOne(filter, product, options);
       res.send(result);
     });
 
+    // * DELETE carts product:
+    app.delete("/carts/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await cartsCollection.deleteOne(query);
+      res.send(result);
+    });
 
     // * Saved Product Collections apis:
 
     // * To get saved data:
-    app.get("/saved" , async(req , res) => {
+    app.get("/saved", async (req, res) => {
       const email = req.query.email;
-      if(!email){
-        res.send([])
-        return
+      if (!email) {
+        res.send([]);
+        return;
       }
-      const query = {email: email};
+      const query = { email: email };
       const result = await savedProductCollection.find(query).toArray();
       res.send(result);
-    })
+    });
 
     // add saved product on saved collection:
-    app.post("/saved" , async(req , res) => {
+    app.post("/saved", async (req, res) => {
       const item = req.body;
       const result = await savedProductCollection.insertOne(item);
       res.send(result);
     });
 
-
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
@@ -147,13 +153,10 @@ async function run() {
 }
 run().catch(console.dir);
 
-
-
-
-app.get( '/' , (req , res) => {
-    res.send('Tech Trove is coming')
+app.get("/", (req, res) => {
+  res.send("Tech Trove is coming");
 });
 
-app.listen(port , () => {
-    console.log(`Tech Trove is running on port: ${port}`)
-})
+app.listen(port, () => {
+  console.log(`Tech Trove is running on port: ${port}`);
+});
