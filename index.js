@@ -96,6 +96,13 @@ async function run() {
     });
 
     // * TO GET USER:
+
+    // * To get all users api:
+    app.get("/users", async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    });
+
     // * SAVED USER:
     app.post("/users", async (req, res) => {
       const user = req.body;
