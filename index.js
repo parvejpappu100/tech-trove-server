@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 
@@ -117,6 +118,25 @@ async function run() {
       res.send(result);
     });
 
+    // * UPDATE USER ROLE:
+    app.put("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updatedRole = req.body;
+      const setNewRole = {
+        $set: {
+          role: updatedRole.role,
+        },
+      };
+      const result = await usersCollection.updateOne(
+        filter,
+        setNewRole,
+        options
+      );
+      res.send(result);
+    });
+
     // * Update carts product quantity:
     app.put("/carts/:id", async (req, res) => {
       const id = req.params.id;
@@ -162,6 +182,20 @@ async function run() {
       const result = await savedProductCollection.insertOne(item);
       res.send(result);
     });
+
+    // // * CREATE PAYMENT INTENT:
+    // app.post("/create-payment-intent", async (req, res) => {
+    //   const { price } = req.body;
+    //   const amount = price * 100;
+    //   const paymentIntent = await stripe.paymentIntents.create({
+    //     amount: amount,
+    //     currency: "usd",
+    //     payment_method_types: ["card"],
+    //   });
+    //   res.send({
+    //     clientSecret: paymentIntent.client_secret,
+    //   });
+    // });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
