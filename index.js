@@ -3,30 +3,32 @@ const app = express();
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
-const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 require("dotenv").config();
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 const port = process.env.PORT || 5000;
 
 // MIDDLEWARE
 app.use(cors());
 app.use(express.json());
 
-const verifyJWT = (req , res , next) => {
+const verifyJWT = (req, res, next) => {
   const authorization = req.headers.authorization;
-  if( ! authorization){
-    return res.status(401).send({error: true , message: "unauthorize access"});
+  if (!authorization) {
+    return res.status(401).send({ error: true, message: "unauthorize access" });
   }
-  
+
   const token = authorization.split(" ")[1];
 
-  jwt.verify(token , process.env.ACCESS_TOKEN_SECRET, (err , decoded) => {
-    if(err){
-      return res.status(401).send({error: true , message: "unauthorize access"});
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) {
+      return res
+        .status(401)
+        .send({ error: true, message: "unauthorize access" });
     }
     req.decoded = decoded;
     next();
-  })
-}
+  });
+};
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.fdnsrak.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -52,16 +54,32 @@ async function run() {
     const sponsorsCollection = client.db("techDb").collection("sponsors");
     const usersCollection = client.db("techDb").collection("users");
     const cartsCollection = client.db("techDb").collection("carts");
-    const savedProductCollection = client.db("techDb").collection("savedProduct");
+    const savedProductCollection = client
+      .db("techDb")
+      .collection("savedProduct");
+    const paymentsCollection = client.db("techDb").collection("payments");
 
     // * JWT:
     app.post("/jwt", (req, res) => {
       const user = req.body;
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: "1hr",
+        expiresIn: "7d",
       });
       res.send({ token });
     });
+
+    // * Verify admin:
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      if (user?.role !== "admin") {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden message" });
+      }
+      next();
+    };
 
     // * To get all products data:
     app.get("/products", async (req, res) => {
@@ -110,8 +128,10 @@ async function run() {
       }
 
       const decodedEmail = req.decoded.email;
-      if( email !== decodedEmail){
-        return res.status(403).send({error: true , message: "forbidden access"})
+      if (email !== decodedEmail) {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden access" });
       }
 
       const query = { email: email };
@@ -122,7 +142,6 @@ async function run() {
     // add carts product on carts collection:
     app.post("/carts", async (req, res) => {
       const item = req.body;
-      console.log(item);
       const result = await cartsCollection.insertOne(item);
       res.send(result);
     });
@@ -130,7 +149,7 @@ async function run() {
     // * TO GET USER:
 
     // * To get all users api:
-    app.get("/users",verifyJWT, async (req, res) => {
+    app.get("/users", verifyJWT, verifyAdmin, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
@@ -150,7 +169,7 @@ async function run() {
     });
 
     // * UPDATE USER ROLE:
-    app.put("/users/:id",verifyJWT, async (req, res) => {
+    app.put("/users/:id", verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
@@ -169,7 +188,7 @@ async function run() {
     });
 
     // * CHECK ADMIN OR  NOT:
-    app.get("/users/admin/:email", verifyJWT, async (req, res) => {
+    app.get("/users/admin/:email", verifyJWT, verifyAdmin, async (req, res) => {
       const email = req.params.email;
 
       if (req.decoded.email !== email) {
@@ -183,7 +202,7 @@ async function run() {
     });
 
     // * DELETE USER:
-    app.delete("/users/:id",verifyJWT, async (req, res) => {
+    app.delete("/users/:id", verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await usersCollection.deleteOne(query);
@@ -191,10 +210,9 @@ async function run() {
     });
 
     // * Update carts product quantity:
-    app.put("/carts/:id",verifyJWT, async (req, res) => {
+    app.put("/carts/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
-      console.log(filter);
       const options = { upsert: true };
       const updatedQuantity = req.body;
       const product = {
@@ -207,7 +225,7 @@ async function run() {
     });
 
     // * DELETE carts product:
-    app.delete("/carts/:id",verifyJWT, async (req, res) => {
+    app.delete("/carts/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await cartsCollection.deleteOne(query);
@@ -217,7 +235,7 @@ async function run() {
     // * Saved Product Collections apis:
 
     // * To get saved data:
-    app.get("/saved", verifyJWT , async (req, res) => {
+    app.get("/saved", verifyJWT, async (req, res) => {
       const email = req.query.email;
       if (!email) {
         res.send([]);
@@ -225,8 +243,10 @@ async function run() {
       }
 
       const decodedEmail = req.decoded.email;
-      if( email !== decodedEmail){
-        return res.status(403).send({error: true , message: "forbidden access"})
+      if (email !== decodedEmail) {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden access" });
       }
 
       const query = { email: email };
@@ -235,25 +255,36 @@ async function run() {
     });
 
     // add saved product on saved collection:
-    app.post("/saved",verifyJWT, async (req, res) => {
+    app.post("/saved", verifyJWT, async (req, res) => {
       const item = req.body;
       const result = await savedProductCollection.insertOne(item);
       res.send(result);
     });
 
-    // // * CREATE PAYMENT INTENT:
-    // app.post("/create-payment-intent", async (req, res) => {
-    //   const { price } = req.body;
-    //   const amount = price * 100;
-    //   const paymentIntent = await stripe.paymentIntents.create({
-    //     amount: amount,
-    //     currency: "usd",
-    //     payment_method_types: ["card"],
-    //   });
-    //   res.send({
-    //     clientSecret: paymentIntent.client_secret,
-    //   });
-    // });
+    // * CREATE PAYMENT INTENT:
+    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
+      const { price } = req.body;
+      const amount = parseFloat((price * 100).toFixed(2));
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+
+    // * Delete cart Item after successfully payment and save payment information in db:
+    app.post("/payments", verifyJWT, async (req, res) => {
+      const payment = req.body;
+      const insertResult = await paymentsCollection.insertOne(payment);
+
+      const query = { email: payment.email };
+      const deletedResult = await cartsCollection.deleteMany(query);
+
+      res.send({ insertResult, deletedResult });
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
