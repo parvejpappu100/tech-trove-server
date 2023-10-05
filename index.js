@@ -154,6 +154,14 @@ async function run() {
       res.send(result);
     });
 
+    // * TO GET USER INFO:
+    app.get("/user-info/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await usersCollection.findOne(query);
+      res.send(result);
+    });
+
     // * SAVED USER:
     app.post("/users", async (req, res) => {
       const user = req.body;
@@ -182,6 +190,30 @@ async function run() {
       const result = await usersCollection.updateOne(
         filter,
         setNewRole,
+        options
+      );
+      res.send(result);
+    });
+
+    // * UPDATE USER ADDRESS INFO:
+    app.put("/update-user-info/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const options = { upsert: true };
+      const updateUserInfo = req.body;
+      const setNewInfo = {
+        $set: {
+          city: updateUserInfo.city,
+          phone: updateUserInfo.phone,
+          country: updateUserInfo.country,
+          message: updateUserInfo.message,
+          postCode: updateUserInfo.postCode,
+          address: updateUserInfo.address,
+        },
+      };
+      const result = await usersCollection.updateOne(
+        filter,
+        setNewInfo,
         options
       );
       res.send(result);
