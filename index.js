@@ -307,6 +307,35 @@ async function run() {
       });
     });
 
+    // * GET ALL USER PAYMENT DATA:
+    app.get("/users-payment-data", verifyJWT, verifyAdmin, async (req, res) => {
+      const result = await paymentsCollection.find().sort({ _id: -1 }).toArray();
+      res.send(result);
+    });
+
+    // * GET CURRENT USER PAYMENT DATA:
+    app.get("/payment-data/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      if (!email) {
+        res.send([]);
+        return;
+      }
+
+      const decodedEmail = req.decoded.email;
+      if (email !== decodedEmail) {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden access" });
+      }
+
+      const query = { email: email };
+      const result = await paymentsCollection
+        .find(query)
+        .sort({ _id: -1 })
+        .toArray();
+      res.send(result);
+    });
+
     // * Delete cart Item after successfully payment and save payment information in db:
     app.post("/payments", verifyJWT, async (req, res) => {
       const payment = req.body;
