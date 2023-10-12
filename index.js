@@ -293,6 +293,14 @@ async function run() {
       res.send(result);
     });
 
+    // * TO DELETE SAVED CARD DATA:
+    app.delete("/saved-delete/:id",verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await savedProductCollection.deleteOne(query);
+      res.send(result);
+    });
+
     // * CREATE PAYMENT INTENT:
     app.post("/create-payment-intent", verifyJWT, async (req, res) => {
       const { price } = req.body;
@@ -309,9 +317,36 @@ async function run() {
 
     // * GET ALL USER PAYMENT DATA:
     app.get("/users-payment-data", verifyJWT, verifyAdmin, async (req, res) => {
-      const result = await paymentsCollection.find().sort({ _id: -1 }).toArray();
+      const result = await paymentsCollection
+        .find()
+        .sort({ _id: -1 })
+        .toArray();
       res.send(result);
     });
+
+    // * CHANGE ORDER STATUS:
+    app.put(
+      "/user-payment-data/:id",
+      verifyJWT,
+      verifyAdmin,
+      async (req, res) => {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const options = { upsert: true };
+        const updateStatus = req.body;
+        const setNewStatus = {
+          $set: {
+            status: updateStatus.status,
+          },
+        };
+        const result = await paymentsCollection.updateOne(
+          filter,
+          setNewStatus,
+          options
+        );
+        res.send(result);
+      }
+    );
 
     // * GET CURRENT USER PAYMENT DATA:
     app.get("/payment-data/:email", verifyJWT, async (req, res) => {
