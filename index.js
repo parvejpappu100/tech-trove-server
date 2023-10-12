@@ -293,8 +293,18 @@ async function run() {
       res.send(result);
     });
 
+    // * ADD TO CART SAVED PRODUCT:
+    app.post("/add-saved-product",verifyJWT, async (req, res) => {
+      const item = req.body;
+      const insertResult = await cartsCollection.insertOne(item);
+      const query = { productId: item.productId};
+      const deletedResult = await savedProductCollection.deleteOne(query);
+
+      res.send({ insertResult, deletedResult });
+    });
+
     // * TO DELETE SAVED CARD DATA:
-    app.delete("/saved-delete/:id",verifyJWT, async (req, res) => {
+    app.delete("/saved-delete/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await savedProductCollection.deleteOne(query);
