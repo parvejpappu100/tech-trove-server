@@ -106,19 +106,46 @@ async function run() {
     });
 
     // * To add new slider:
-    app.post("/addSlider", async (req, res) => {
+    app.post("/addSlider", verifyJWT, verifyAdmin, async (req, res) => {
       const newSlider = req.body;
       const result = await slidersCollection.insertOne(newSlider);
       res.send(result);
     });
 
-    // * To delete slider:
-    app.delete("/deleteSlider/:id", async (req, res) => {
+    // * To update slider:
+    app.put("/updateSlider/:id", async (req, res) => {
       const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
-      const result = await slidersCollection.deleteOne(query);
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateSlider = req.body;
+      const setNewSlider = {
+        $set: {
+          title: updateSlider.title,
+          category: updateSlider.category,
+          details: updateSlider.details,
+          image: updateSlider.image,
+        },
+      };
+      const result = await slidersCollection.updateOne(
+        filter,
+        setNewSlider,
+        options
+      );
       res.send(result);
     });
+
+    // * To delete slider:
+    app.delete(
+      "/deleteSlider/:id",
+      verifyJWT,
+      verifyAdmin,
+      async (req, res) => {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await slidersCollection.deleteOne(query);
+        res.send(result);
+      }
+    );
 
     // * To get Special Discount Data:
     app.get("/discount", async (req, res) => {
