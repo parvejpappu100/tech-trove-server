@@ -105,6 +105,13 @@ async function run() {
       res.send(result);
     });
 
+    // * To add new slider:
+    app.post("/addSlider", async (req, res) => {
+      const newSlider = req.body;
+      const result = await slidersCollection.insertOne(newSlider);
+      res.send(result);
+    });
+
     // * To get Special Discount Data:
     app.get("/discount", async (req, res) => {
       const result = await discountCollection.find().toArray();
@@ -139,8 +146,8 @@ async function run() {
       res.send(result);
     });
 
-    // add carts product on carts collection:
-    app.post("/carts", async (req, res) => {
+    //* add carts product on carts collection:
+    app.post("/carts", verifyJWT, async (req, res) => {
       const item = req.body;
       const result = await cartsCollection.insertOne(item);
       res.send(result);
@@ -294,10 +301,10 @@ async function run() {
     });
 
     // * ADD TO CART SAVED PRODUCT:
-    app.post("/add-saved-product",verifyJWT, async (req, res) => {
+    app.post("/add-saved-product", verifyJWT, async (req, res) => {
       const item = req.body;
       const insertResult = await cartsCollection.insertOne(item);
-      const query = { productId: item.productId};
+      const query = { productId: item.productId };
       const deletedResult = await savedProductCollection.deleteOne(query);
 
       res.send({ insertResult, deletedResult });
