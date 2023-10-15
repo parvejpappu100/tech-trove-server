@@ -112,6 +112,14 @@ async function run() {
       res.send(result);
     });
 
+    // * To delete slider:
+    app.delete("/deleteSlider/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await slidersCollection.deleteOne(query);
+      res.send(result);
+    });
+
     // * To get Special Discount Data:
     app.get("/discount", async (req, res) => {
       const result = await discountCollection.find().toArray();
