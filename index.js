@@ -166,6 +166,15 @@ async function run() {
       res.send(result);
     });
 
+    // * To delete slider:
+    app.delete("/deleteSponsor/:id",verifyJWT,verifyAdmin, async (req, res) => {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await sponsorsCollection.deleteOne(query);
+        res.send(result);
+      }
+    );
+
     // * Carts Collections apis:
 
     // * To get carts data:
