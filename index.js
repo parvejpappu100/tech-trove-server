@@ -159,6 +159,13 @@ async function run() {
       res.send(result);
     });
 
+    // * To add new sponsor:
+    app.post("/addSponsor", verifyJWT, verifyAdmin, async (req, res) => {
+      const newSponsor = req.body;
+      const result = await sponsorsCollection.insertOne(newSponsor);
+      res.send(result);
+    });
+
     // * Carts Collections apis:
 
     // * To get carts data:
